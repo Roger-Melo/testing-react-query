@@ -1,49 +1,62 @@
 import { useQuery } from '@tanstack/react-query'
 
-const fetchUser = username => fetch(`https://api.github.com/users/${username}`)
-  .then(res => res.json())
+const fetchIssues = ({ organization, repository }) =>
+  fetch(`https://api.github.com/repos/${organization}/${repository}/issues`)
+    .then(res => res.json())
+    .then(data => {
+      console.log('data:', data)
+      return data.map(issue => ({
+        id: issue.id,
+        state: issue.state,
+        title: issue.title,
+        createdAt: issue.created_at,
+        author: { name: issue.user.login, avatar: issue.user.avatar_url },
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name }))
+      }))
+    })
 
-const GitHubUser = ({ username }) => {
-  const { isError, error, isLoading, data } = useQuery({ queryKey: [username], queryFn: () => fetchUser(username), refetchOnWindowFocus: false })
+const getFormattedDate = date => {
+  const [year, month, day] = date.split('T')[0].split('-')
+  return `${day}/${month}/${year}`
+}
+
+const IssueItem = ({ state, title, createdAt, labels, author }) =>
+  <li>
+    <span>{state}</span>
+    <h3>
+      <a href="https://github.com/frontendbr/vagas/issues/8025" target="_blank" rel="noreferrer">
+        {title}
+      </a>
+    </h3>
+    <div className="createdBy">
+      <p>Criada em {getFormattedDate(createdAt)}, por {author.name}</p>
+      <img src={author.avatar} alt={`Foto de ${author.name}`} />
+    </div>
+    {labels.length > 0 && (
+      <p className="labels">Labels: {labels.map(({ id, color, name }) =>
+        <span key={id} style={{ backgroundColor: `#${color}` }}>{name}</span>)}
+      </p>
+    )}
+  </li>
+
+const IssuesList = () => {
+  const { isError, error, isLoading, data } = useQuery({
+    queryKey: ['issues'],
+    queryFn: () => fetchIssues({ organization: 'frontendbr', repository: 'vagas' }),
+    refetchOnWindowFocus: false
+  })
+
   return isError
     ? <p>{error.message}</p>
     : isLoading
       ? <p>Carregando informações...</p>
-      : (
-        <ul>
-          {Object.entries(data).map(([key, value]) =>
-            <li key={key}>
-              <b>{key}</b>: {value}
-            </li>)
-          }
-        </ul>
-      )
-}
-
-const App = () => <GitHubUser username="roger-melo" />
-
-export { App }
-/*
-const RandomNumber = () => {
-  const { isError, error, isFetching, isLoading, data, refetch } =
-    useQuery({ queryKey: ['randomNumber'], queryFn: fetchRandomNumber })
-
-  return isError
-    ? <p>{error.message}</p>
-    : (
-      <>
-        <h2>Número aleatório: {isFetching || isLoading ? '(carregando...)' : data}</h2>
-        <button onClick={refetch} disabled={isFetching || isLoading}>Gerar número</button>
-      </>
-    )
+      : <ul className="issuesList">{data.map(issue => <IssueItem key={issue.id} {...issue} />)}</ul>
 }
 
 const App = () =>
   <>
-    <QueryClientProvider client={queryClient}>
-      <RandomNumber />
-    </QueryClientProvider>
+    <h1>Vagas</h1>
+    <IssuesList />
   </>
 
 export { App }
-*/
