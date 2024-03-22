@@ -4,14 +4,14 @@ const fetchIssues = ({ organization, repository }) =>
   fetch(`https://api.github.com/repos/${organization}/${repository}/issues`)
     .then(res => res.json())
     .then(data => {
-      console.log('data:', data)
       return data.map(issue => ({
         id: issue.id,
         state: issue.state,
         title: issue.title,
         createdAt: issue.created_at,
         author: { name: issue.user.login, avatar: issue.user.avatar_url },
-        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name }))
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+        url: issue.html_url
       }))
     })
 
@@ -20,13 +20,11 @@ const getFormattedDate = date => {
   return `${day}/${month}/${year}`
 }
 
-const IssueItem = ({ state, title, createdAt, labels, author }) =>
+const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
   <li>
     <span>{state}</span>
     <h3>
-      <a href="https://github.com/frontendbr/vagas/issues/8025" target="_blank" rel="noreferrer">
-        {title}
-      </a>
+      <a href={url} target="_blank" rel="noreferrer">{title}</a>
     </h3>
     <div className="createdBy">
       <p>Criada em {getFormattedDate(createdAt)}, por {author.name}</p>
