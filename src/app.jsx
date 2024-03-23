@@ -21,7 +21,8 @@ const Users = () => {
   const { isLoading, isError, isSuccess, error, data } = useQuery({
     queryKey: ['user', username],
     queryFn: () => fetchUser(username),
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: Infinity
   })
 
   const changeUser = i => setUsername(usernames[i])
