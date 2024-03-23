@@ -5,19 +5,21 @@ const fetchUser = username => fetch(`https://api.github.com/users/${username}`)
   .then(res => res.json())
   .then(data => ({ id: data.id, name: data.name, avatarUrl: data.avatar_url }))
 
-const UserPicker = ({ onChangeUser }) => users.map((_, i) =>
-  <button key={i} onClick={() => onChangeUser(i)}>Usuário {`${i + 1}`}</button>)
+const UserPicker = ({ onChangeUser }) => usernames.map((_, i) =>
+  <button key={usernames[i]} onClick={() => onChangeUser(i)}>Usuário {`${i + 1}`}</button>)
 
-const users = ['Roger-Melo', 'ryanflorence', 'getify', 'gaearon']
+const usernames = ['Roger-Melo', 'ryanflorence', 'getify', 'gaearon']
 
 const User = () => {
-  const [username, setUsername] = useState(users[0])
+  const [username, setUsername] = useState(usernames[0])
   const { isLoading, isError, isSuccess, error, data } = useQuery({
     queryKey: ['user', username],
-    queryFn: () => fetchUser(username)
+    queryFn: () => fetchUser(username),
+    refetchOnWindowFocus: false
   })
 
-  const changeUser = i => setUsername(users[i])
+  const changeUser = i => setUsername(usernames[i])
+  const userIndex = usernames.indexOf(username)
 
   return (
     <>
@@ -26,7 +28,7 @@ const User = () => {
       {isError && <p>{error.message}</p>}
       {isSuccess && (
         <>
-          <h1>{data.name}</h1>
+          <h1>Usuário {userIndex + 1}: {data.name}</h1>
           <img src={data.avatarUrl} alt={`Foto de ${data.name}`} className="avatar" />
         </>
       )}
