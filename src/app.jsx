@@ -8,9 +8,15 @@ const fetchUser = username => fetch(`https://api.github.com/users/${username}`)
 const UserPicker = ({ onChangeUser }) => usernames.map((_, i) =>
   <button key={usernames[i]} onClick={() => onChangeUser(i)}>Usuário {`${i + 1}`}</button>)
 
+const User = ({ data, username }) =>
+  <>
+    <h1>Usuário {usernames.indexOf(username) + 1}: {data.name}</h1>
+    <img src={data.avatarUrl} alt={`Foto de ${data.name}`} className="avatar" />
+  </>
+
 const usernames = ['Roger-Melo', 'ryanflorence', 'getify', 'gaearon']
 
-const User = () => {
+const Users = () => {
   const [username, setUsername] = useState(usernames[0])
   const { isLoading, isError, isSuccess, error, data } = useQuery({
     queryKey: ['user', username],
@@ -19,23 +25,17 @@ const User = () => {
   })
 
   const changeUser = i => setUsername(usernames[i])
-  const userIndex = usernames.indexOf(username)
 
   return (
     <>
       <UserPicker onChangeUser={changeUser} />
       {isLoading && <p>Carregando informações...</p>}
       {isError && <p>{error.message}</p>}
-      {isSuccess && (
-        <>
-          <h1>Usuário {userIndex + 1}: {data.name}</h1>
-          <img src={data.avatarUrl} alt={`Foto de ${data.name}`} className="avatar" />
-        </>
-      )}
+      {isSuccess && <User data={data} username={username} />}
     </>
   )
 }
 
-const App = () => <User />
+const App = () => <Users />
 
 export { App }
