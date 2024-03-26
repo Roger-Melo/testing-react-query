@@ -38,22 +38,26 @@ const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
   </li>
 
 const IssuesList = () => {
-  const { isError, error, isLoading, data } = useQuery({
+  const { isError, isLoading, isSuccess, error, data } = useQuery({
     queryKey: ['issues'],
     queryFn: () => fetchIssues({ organization: 'frontendbr', repository: 'vagas' }),
     refetchOnWindowFocus: false
   })
 
-  return isError
-    ? <p>{error.message}</p>
-    : isLoading
-      ? <p>Carregando informações...</p>
-      : (
+  return (
+    <>
+      {isError && <p>{error.message}</p>}
+      {isLoading && <p>Carregando informações...</p>}
+      {isSuccess && (
         <>
           <h1>Vagas</h1>
-          <ul className="issuesList">{data.map(issue => <IssueItem key={issue.id} {...issue} />)}</ul>
+          <ul className="issuesList">
+            {data.map(issue => <IssueItem key={issue.id} {...issue} />)}
+          </ul>
         </>
-      )
+      )}
+    </>
+  )
 }
 
 const App = () => <IssuesList />
