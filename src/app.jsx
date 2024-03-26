@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
-const fetchIssues = ({ organization, repository }) =>
-  fetch(`https://api.github.com/repos/${organization}/${repository}/issues`)
+const fetchIssues = () =>
+  fetch('https://api.github.com/repos/frontendbr/vagas/issues')
     .then(res => res.json())
     .then(data => data.map(issue => ({
       id: issue.id,
@@ -37,7 +37,7 @@ const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
 const IssuesList = () => {
   const { isError, isLoading, isSuccess, error, data } = useQuery({
     queryKey: ['issues'],
-    queryFn: () => fetchIssues({ organization: 'frontendbr', repository: 'vagas' }),
+    queryFn: fetchIssues,
     refetchOnWindowFocus: false
   })
 
