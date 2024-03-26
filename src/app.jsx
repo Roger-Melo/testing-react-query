@@ -13,6 +13,11 @@ const fetchIssues = () =>
       url: issue.html_url
     })))
 
+const fetchLabels = () =>
+  fetch('https://api.github.com/repos/frontendbr/vagas/labels')
+    .then(res => res.json())
+    .then(data => data.map(label => ({ id: label.id, name: label.name, color: label.color })))
+
 const getFormattedDate = date => {
   const [year, month, day] = date.split('T')[0].split('-')
   return `${day}/${month}/${year}`
@@ -43,7 +48,7 @@ const IssuesList = () => {
   })
 
   return (
-    <>
+    <div>
       {isError && <p>{error.message}</p>}
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
@@ -54,10 +59,38 @@ const IssuesList = () => {
           </ul>
         </>
       )}
-    </>
+    </div>
   )
 }
 
-const App = () => <IssuesList />
+const LabelsList = () => {
+  const { isError, isLoading, isSuccess, error, data } = useQuery({
+    queryKey: ['labels'],
+    queryFn: fetchLabels,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity
+  })
+
+  return (
+    <div>
+      {isError && <p>{error.message}</p>}
+      {isLoading && <p>Carregando informações...</p>}
+      {isSuccess && (
+        <>
+          <h2>Labels</h2>
+          <ul className="labelsList">
+            {data.map(label => <Label key={label.id} {...label} />)}
+          </ul>
+        </>
+      )}
+    </div>
+  )
+}
+
+const App = () =>
+  <div className="app">
+    <IssuesList />
+    <LabelsList />
+  </div>
 
 export { App }

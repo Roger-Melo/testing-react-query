@@ -1,18 +1,27 @@
 ul {
   list-style: none;
+  padding-inline-start: 0;
+}
+
+.app {
+  display: flex;
+  gap: 1rem;
+  max-width: 80rem;
+  margin: auto;
+  padding-top: 2rem;
 }
 
 .issuesList {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  width: 50rem;
 }
 
 .issuesList li {
   border: .1rem solid lightgrey;
   padding: 1rem;
   border-radius: 1rem;
-  max-width: 50%;
 }
 
 .createdBy {
@@ -36,4 +45,13 @@ ul {
 
 .label:hover {
   cursor: pointer;
+}
+
+.labelsList .label {
+  margin-bottom: .4rem;
+}
+
+.labelsList {
+  display: flex;
+  flex-wrap: wrap;
 }
