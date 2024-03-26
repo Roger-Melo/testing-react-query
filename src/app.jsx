@@ -14,7 +14,7 @@ const fetchIssues = () =>
     })))
 
 const fetchLabels = () =>
-  fetch('https://api.github.com/repos/frontendbr/vagas/labels')
+  fetch('https://api.github.com/repos/frontendbr/vagas/labels?per_page=100')
     .then(res => res.json())
     .then(data => data.map(label => ({ id: label.id, name: label.name, color: label.color })))
 
