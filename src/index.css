@@ -27,9 +27,13 @@ ul {
   border-radius: 50%;
 }
 
-.labels span {
-  display: inline-block;
+.label {
   padding: .3rem 0.7rem;
   border-radius: 0.4rem;
   margin-right: .3rem;
+  border-width: 0;
+}
+
+.label:hover {
+  cursor: pointer;
 }

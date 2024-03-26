@@ -18,6 +18,9 @@ const getFormattedDate = date => {
   return `${day}/${month}/${year}`
 }
 
+const Label = ({ color, name }) =>
+  <button className="label" style={{ backgroundColor: `#${color}` }}>{name}</button>
+
 const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
   <li>
     <span>{state}</span>
@@ -28,11 +31,7 @@ const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
       <p>Criada em {getFormattedDate(createdAt)}, por {author.username}</p>
       <img src={author.avatar} alt={`Foto de ${author.username}`} />
     </div>
-    {labels.length > 0 && (
-      <p className="labels">Labels: {labels.map(({ id, color, name }) =>
-        <span key={id} style={{ backgroundColor: `#${color}` }}>{name}</span>)}
-      </p>
-    )}
+    {labels.length > 0 && <p>Labels: {labels.map(label => <Label key={label.id} {...label} />)}</p>}
   </li>
 
 const IssuesList = () => {
