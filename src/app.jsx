@@ -3,17 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 const fetchIssues = ({ organization, repository }) =>
   fetch(`https://api.github.com/repos/${organization}/${repository}/issues`)
     .then(res => res.json())
-    .then(data => {
-      return data.map(issue => ({
-        id: issue.id,
-        state: issue.state,
-        title: issue.title,
-        createdAt: issue.created_at,
-        author: { username: issue.user.login, avatar: issue.user.avatar_url },
-        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-        url: issue.html_url
-      }))
-    })
+    .then(data => data.map(issue => ({
+      id: issue.id,
+      state: issue.state,
+      title: issue.title,
+      createdAt: issue.created_at,
+      author: { username: issue.user.login, avatar: issue.user.avatar_url },
+      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+      url: issue.html_url
+    })))
 
 const getFormattedDate = date => {
   const [year, month, day] = date.split('T')[0].split('-')
