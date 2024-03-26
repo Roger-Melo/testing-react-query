@@ -9,7 +9,7 @@ const fetchIssues = ({ organization, repository }) =>
         state: issue.state,
         title: issue.title,
         createdAt: issue.created_at,
-        author: { name: issue.user.login, avatar: issue.user.avatar_url },
+        author: { username: issue.user.login, avatar: issue.user.avatar_url },
         labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
         url: issue.html_url
       }))
@@ -27,8 +27,8 @@ const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
       <a href={url} target="_blank" rel="noreferrer">{title}</a>
     </h3>
     <div className="createdBy">
-      <p>Criada em {getFormattedDate(createdAt)}, por {author.name}</p>
-      <img src={author.avatar} alt={`Foto de ${author.name}`} />
+      <p>Criada em {getFormattedDate(createdAt)}, por {author.username}</p>
+      <img src={author.avatar} alt={`Foto de ${author.username}`} />
     </div>
     {labels.length > 0 && (
       <p className="labels">Labels: {labels.map(({ id, color, name }) =>
