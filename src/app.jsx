@@ -38,7 +38,8 @@ const IssuesList = () => {
   const { isError, isLoading, isSuccess, error, data } = useQuery({
     queryKey: ['issues'],
     queryFn: fetchIssues,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: Infinity
   })
 
   return (
