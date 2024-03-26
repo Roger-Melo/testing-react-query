@@ -1,42 +1,61 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
 
-const fetchUser = username => fetch(`https://api.github.com/users/${username}`)
-  .then(res => res.json())
-  .then(data => ({ id: data.id, name: data.name, avatarUrl: data.avatar_url }))
+const fetchIssues = ({ organization, repository }) =>
+  fetch(`https://api.github.com/repos/${organization}/${repository}/issues`)
+    .then(res => res.json())
+    .then(data => {
+      return data.map(issue => ({
+        id: issue.id,
+        state: issue.state,
+        title: issue.title,
+        createdAt: issue.created_at,
+        author: { name: issue.user.login, avatar: issue.user.avatar_url },
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+        url: issue.html_url
+      }))
+    })
 
-const UserPicker = ({ onChangeUser }) => usernames.map((_, i) =>
-  <button key={usernames[i]} onClick={() => onChangeUser(i)}>Usuário {`${i + 1}`}</button>)
-
-const User = ({ data, username }) =>
-  <>
-    <h1>Usuário {usernames.indexOf(username) + 1}: {data.name}</h1>
-    <img src={data.avatarUrl} alt={`Foto de ${data.name}`} className="avatar" />
-  </>
-
-const usernames = ['Roger-Melo', 'ryanflorence', 'getify', 'gaearon']
-
-const Users = () => {
-  const [username, setUsername] = useState(usernames[0])
-  const { isLoading, isError, isSuccess, error, data } = useQuery({
-    queryKey: ['user', username],
-    queryFn: () => fetchUser(username),
-    refetchOnWindowFocus: false,
-    staleTime: Infinity
-  })
-
-  const changeUser = i => setUsername(usernames[i])
-
-  return (
-    <>
-      <UserPicker onChangeUser={changeUser} />
-      {isLoading && <p>Carregando informações...</p>}
-      {isError && <p>{error.message}</p>}
-      {isSuccess && <User data={data} username={username} />}
-    </>
-  )
+const getFormattedDate = date => {
+  const [year, month, day] = date.split('T')[0].split('-')
+  return `${day}/${month}/${year}`
 }
 
-const App = () => <Users />
+const IssueItem = ({ state, title, createdAt, labels, author, url }) =>
+  <li>
+    <span>{state}</span>
+    <h3>
+      <a href={url} target="_blank" rel="noreferrer">{title}</a>
+    </h3>
+    <div className="createdBy">
+      <p>Criada em {getFormattedDate(createdAt)}, por {author.name}</p>
+      <img src={author.avatar} alt={`Foto de ${author.name}`} />
+    </div>
+    {labels.length > 0 && (
+      <p className="labels">Labels: {labels.map(({ id, color, name }) =>
+        <span key={id} style={{ backgroundColor: `#${color}` }}>{name}</span>)}
+      </p>
+    )}
+  </li>
+
+const IssuesList = () => {
+  const { isError, error, isLoading, data } = useQuery({
+    queryKey: ['issues'],
+    queryFn: () => fetchIssues({ organization: 'frontendbr', repository: 'vagas' }),
+    refetchOnWindowFocus: false
+  })
+
+  return isError
+    ? <p>{error.message}</p>
+    : isLoading
+      ? <p>Carregando informações...</p>
+      : (
+        <>
+          <h1>Vagas</h1>
+          <ul className="issuesList">{data.map(issue => <IssueItem key={issue.id} {...issue} />)}</ul>
+        </>
+      )
+}
+
+const App = () => <IssuesList />
 
 export { App }
