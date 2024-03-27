@@ -55,3 +55,7 @@ ul {
   display: flex;
   flex-wrap: wrap;
 }
+
+.activeLabel {
+  filter: opacity(.3);
+}
