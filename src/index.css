@@ -11,11 +11,14 @@ ul {
   padding-top: 2rem;
 }
 
+.issuesListContainer {
+  width: 50rem;
+}
+
 .issuesList {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  width: 50rem;
 }
 
 .issuesList li {
@@ -45,6 +48,10 @@ ul {
 
 .label:hover {
   cursor: pointer;
+}
+
+.labelsListContainer {
+  width: 28rem;
 }
 
 .labelsList .label {

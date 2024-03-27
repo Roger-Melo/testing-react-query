@@ -63,16 +63,14 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   })
 
   return (
-    <div>
+    <div className="issuesListContainer">
+      <h1>Vagas</h1>
       {isError && <p>{error.message}</p>}
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
-        <>
-          <h1>Vagas</h1>
-          <ul className="issuesList">
-            {data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
-          </ul>
-        </>
+        <ul className="issuesList">
+          {data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+        </ul>
       )}
     </div>
   )
@@ -87,19 +85,17 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
   })
 
   return (
-    <div>
+    <div className="labelsListContainer">
+      <h2>Labels</h2>
       {isError && <p>{error.message}</p>}
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
-        <>
-          <h2>Labels</h2>
-          <ul className="labelsList">
-            {data.map(label => {
-              const isActive = activeLabels.some(activeLabel => label.id === activeLabel.id)
-              return <Label key={label.id} isActive={isActive} label={label} activeLabels={activeLabels} onClickLabel={onClickLabel} />
-            })}
-          </ul>
-        </>
+        <ul className="labelsList">
+          {data.map(label => {
+            const isActive = activeLabels.some(activeLabel => label.id === activeLabel.id)
+            return <Label key={label.id} isActive={isActive} label={label} activeLabels={activeLabels} onClickLabel={onClickLabel} />
+          })}
+        </ul>
       )}
     </div>
   )
