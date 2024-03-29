@@ -70,3 +70,8 @@ ul {
 .inputSearchIssues {
   border: .1rem solid lightgrey;
 }
+
+.searchIssues {
+  display: flex;
+  gap: 1rem;
+}

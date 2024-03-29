@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const getParametrizedIssues = data => data.map(issue => ({
   id: issue.id,
@@ -55,9 +55,17 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
       </p>
     )}
   </li>
-{/* TODO: resetar form após envio */ }
+
 const IssuesList = ({ activeLabels, onClickLabel }) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const formRef = useRef(null)
+
+  useEffect(() => {
+    if (searchTerm.length > 0) {
+      formRef.current.reset()
+    }
+  }, [searchTerm])
+
   const searchedIssuesQuery = useQuery({
     queryKey: ['searchedIssues', { searchTerm }],
     queryFn: () => fetchSearchedIssues(searchTerm),
@@ -88,11 +96,12 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
 
   return (
     <div className="issuesListContainer">
-      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}"`}</h1>
+      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}": ${searchedIssuesQuery.data.length}`}</h1>
       <SearchIssues
         searchedIssuesQuery={searchedIssuesQuery}
         onSearchIssues={searchIssues}
         clearSearchedIssues={clearSearchedIssues}
+        formRef={formRef}
       />
       {isError && <p>{errorMessage}</p>}
       {isLoading && <p>Carregando informações...</p>}
@@ -103,62 +112,6 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     </div>
   )
 }
-
-/*
-return (
-    <div>
-      <form></form>
-      <h2>Issues List</h2>
-      
-      {issuesQuery.isLoading ? (
-        <p>Loading...</p>
-      ) : searchQuery.fetchStatus === "idle" &&
-        searchQuery.isLoading === true ? (
-        <ul className="issues-list">
-          {issuesQuery.data.map((issue) => (
-            <IssueItem
-              key={issue.id}
-              title={issue.title}
-              number={issue.number}
-              assignee={issue.assignee}
-              commentCount={issue.comments.length}
-              createdBy={issue.createdBy}
-              createdDate={issue.createdDate}
-              labels={issue.labels}
-              status={issue.status}
-            />
-          ))}
-        </ul>
-      ) : (
-        <>
-          <h2>Search Results</h2>
-          {searchQuery.isLoading ? (
-            <p>Loading...</p>
-          ) : (
-            <>
-              <p>{searchQuery.data.count} Results</p>
-              <ul className="issues-list">
-                {searchQuery.data.items.map((issue) => (
-                  <IssueItem
-                    key={issue.id}
-                    title={issue.title}
-                    number={issue.number}
-                    assignee={issue.assignee}
-                    commentCount={issue.comments.length}
-                    createdBy={issue.createdBy}
-                    createdDate={issue.createdDate}
-                    labels={issue.labels}
-                    status={issue.status}
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-        </>
-      )}
-    </div>
-  );
-*/
 
 const LabelsList = ({ activeLabels, onClickLabel }) => {
   const { isError, isLoading, isSuccess, error, data } = useQuery({
@@ -197,9 +150,9 @@ const fetchSearchedIssues = searchTerm => {
     .then(data => getParametrizedIssues(data.items))
 }
 
-const SearchIssues = ({ searchedIssuesQuery, onSearchIssues, clearSearchedIssues }) =>
-  <>
-    <form onSubmit={onSearchIssues}>
+const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, clearSearchedIssues }) =>
+  <div className="searchIssues">
+    <form onSubmit={onSearchIssues} ref={formRef}>
       <input
         disabled={searchedIssuesQuery?.isLoading}
         type="search"
@@ -213,7 +166,7 @@ const SearchIssues = ({ searchedIssuesQuery, onSearchIssues, clearSearchedIssues
       <button disabled={searchedIssuesQuery?.isLoading}>Pesquisar</button>
     </form>
     {searchedIssuesQuery.data && <button onClick={clearSearchedIssues}>Limpar Pesquisa</button>}
-  </>
+  </div>
 
 const App = () => {
   const [activeLabels, setActiveLabels] = useState([])
