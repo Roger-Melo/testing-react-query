@@ -55,11 +55,9 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
       </p>
     )}
   </li>
-
+{/* TODO: resetar form após envio */ }
 const IssuesList = ({ activeLabels, onClickLabel }) => {
-  /*
   const [searchTerm, setSearchTerm] = useState('')
-
   const searchedIssuesQuery = useQuery({
     queryKey: ['searchedIssues', { searchTerm }],
     queryFn: () => fetchSearchedIssues(searchTerm),
@@ -67,7 +65,6 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     staleTime: Infinity,
     enabled: !!searchTerm
   })
-  */
 
   const issuesQuery = useQuery({
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
@@ -76,28 +73,92 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     staleTime: Infinity
   })
 
-  /*
   const searchIssues = e => {
     e.preventDefault()
     const { inputSearchIssues } = e.target.elements
     setSearchTerm(inputSearchIssues.value)
   }
-  */
+
+  const clearSearchedIssues = () => setSearchTerm('')
+
+  const isError = issuesQuery.isError || searchedIssuesQuery.isError
+  const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
+  const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
+  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery : issuesQuery
 
   return (
     <div className="issuesListContainer">
-      <h1>Vagas</h1>
-      <SearchIssues />
-      {issuesQuery.isError && <p>{issuesQuery.error.message}</p>}
-      {issuesQuery.isLoading && <p>Carregando informações...</p>}
-      {issuesQuery.isSuccess && (
-        <ul className="issuesList">
-          {issuesQuery.data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
-        </ul>
-      )}
+      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}"`}</h1>
+      <SearchIssues
+        searchedIssuesQuery={searchedIssuesQuery}
+        onSearchIssues={searchIssues}
+        clearSearchedIssues={clearSearchedIssues}
+      />
+      {isError && <p>{errorMessage}</p>}
+      {isLoading && <p>Carregando informações...</p>}
+      <ul className="issuesList">
+        {queryToBeDisplayed.data?.map(issue =>
+          <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+      </ul>
     </div>
   )
 }
+
+/*
+return (
+    <div>
+      <form></form>
+      <h2>Issues List</h2>
+      
+      {issuesQuery.isLoading ? (
+        <p>Loading...</p>
+      ) : searchQuery.fetchStatus === "idle" &&
+        searchQuery.isLoading === true ? (
+        <ul className="issues-list">
+          {issuesQuery.data.map((issue) => (
+            <IssueItem
+              key={issue.id}
+              title={issue.title}
+              number={issue.number}
+              assignee={issue.assignee}
+              commentCount={issue.comments.length}
+              createdBy={issue.createdBy}
+              createdDate={issue.createdDate}
+              labels={issue.labels}
+              status={issue.status}
+            />
+          ))}
+        </ul>
+      ) : (
+        <>
+          <h2>Search Results</h2>
+          {searchQuery.isLoading ? (
+            <p>Loading...</p>
+          ) : (
+            <>
+              <p>{searchQuery.data.count} Results</p>
+              <ul className="issues-list">
+                {searchQuery.data.items.map((issue) => (
+                  <IssueItem
+                    key={issue.id}
+                    title={issue.title}
+                    number={issue.number}
+                    assignee={issue.assignee}
+                    commentCount={issue.comments.length}
+                    createdBy={issue.createdBy}
+                    createdDate={issue.createdDate}
+                    labels={issue.labels}
+                    status={issue.status}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+*/
 
 const LabelsList = ({ activeLabels, onClickLabel }) => {
   const { isError, isLoading, isSuccess, error, data } = useQuery({
@@ -114,10 +175,15 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
         <ul className="labelsList">
-          {data.map(label => {
-            const isActive = activeLabels.some(activeLabel => label.id === activeLabel.id)
-            return <Label key={label.id} isActive={isActive} label={label} activeLabels={activeLabels} onClickLabel={onClickLabel} />
-          })}
+          {data.map(label =>
+            <Label
+              key={label.id}
+              isActive={activeLabels.some(activeLabel => label.id === activeLabel.id)}
+              label={label}
+              activeLabels={activeLabels}
+              onClickLabel={onClickLabel}
+            />
+          )}
         </ul>
       )}
     </div>
@@ -131,16 +197,26 @@ const fetchSearchedIssues = searchTerm => {
     .then(data => getParametrizedIssues(data.items))
 }
 
-const SearchIssues = ({ searchedIssuesQuery, onSearchIssues }) => {
-  <form onSubmit={onSearchIssues}>
-    <input disabled={searchedIssuesQuery.isLoading} type="search" name="inputSearchIssues" className="inputSearchIssues" placeholder="React" required autoFocus />
-    <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
-  </form>
-}
+const SearchIssues = ({ searchedIssuesQuery, onSearchIssues, clearSearchedIssues }) =>
+  <>
+    <form onSubmit={onSearchIssues}>
+      <input
+        disabled={searchedIssuesQuery?.isLoading}
+        type="search"
+        name="inputSearchIssues"
+        className="inputSearchIssues"
+        placeholder="React"
+        minLength={2}
+        required
+        autoFocus
+      />
+      <button disabled={searchedIssuesQuery?.isLoading}>Pesquisar</button>
+    </form>
+    {searchedIssuesQuery.data && <button onClick={clearSearchedIssues}>Limpar Pesquisa</button>}
+  </>
 
 const App = () => {
   const [activeLabels, setActiveLabels] = useState([])
-
   const markAsActive = label => setActiveLabels(prev => {
     const isAlreadyActive = prev.some(prevLabel => prevLabel.id === label.id)
     return isAlreadyActive ? prev.filter(prevLabel => prevLabel.id !== label.id) : [...prev, label]
