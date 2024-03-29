@@ -1,21 +1,23 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
+const getParametrizedIssues = data => data.map(issue => ({
+  id: issue.id,
+  state: issue.state,
+  title: issue.title,
+  createdAt: issue.created_at,
+  author: { username: issue.user.login, avatar: issue.user.avatar_url },
+  labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+  url: issue.html_url
+}))
+
 const fetchIssues = activeLabels => {
   const labelsParam = activeLabels.length === 0
     ? ''
     : `?labels=${activeLabels.map(label => label.name).join(',')}`
   return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${labelsParam}`)
     .then(res => res.json())
-    .then(data => data.map(issue => ({
-      id: issue.id,
-      state: issue.state,
-      title: issue.title,
-      createdAt: issue.created_at,
-      author: { username: issue.user.login, avatar: issue.user.avatar_url },
-      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-      url: issue.html_url
-    })))
+    .then(getParametrizedIssues)
 }
 
 const fetchLabels = () =>
@@ -55,21 +57,42 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
   </li>
 
 const IssuesList = ({ activeLabels, onClickLabel }) => {
-  const { isError, isLoading, isSuccess, error, data } = useQuery({
+  /*
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const searchedIssuesQuery = useQuery({
+    queryKey: ['searchedIssues', { searchTerm }],
+    queryFn: () => fetchSearchedIssues(searchTerm),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    enabled: !!searchTerm
+  })
+  */
+
+  const issuesQuery = useQuery({
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
     queryFn: () => fetchIssues(activeLabels),
     refetchOnWindowFocus: false,
     staleTime: Infinity
   })
 
+  /*
+  const searchIssues = e => {
+    e.preventDefault()
+    const { inputSearchIssues } = e.target.elements
+    setSearchTerm(inputSearchIssues.value)
+  }
+  */
+
   return (
     <div className="issuesListContainer">
       <h1>Vagas</h1>
-      {isError && <p>{error.message}</p>}
-      {isLoading && <p>Carregando informações...</p>}
-      {isSuccess && (
+      <SearchIssues />
+      {issuesQuery.isError && <p>{issuesQuery.error.message}</p>}
+      {issuesQuery.isLoading && <p>Carregando informações...</p>}
+      {issuesQuery.isSuccess && (
         <ul className="issuesList">
-          {data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+          {issuesQuery.data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
         </ul>
       )}
     </div>
@@ -101,8 +124,23 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
   )
 }
 
+const fetchSearchedIssues = searchTerm => {
+  const queryString = '?q=' + encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)
+  return fetch(`https://api.github.com/search/issues${queryString}`)
+    .then(res => res.json())
+    .then(data => getParametrizedIssues(data.items))
+}
+
+const SearchIssues = ({ searchedIssuesQuery, onSearchIssues }) => {
+  <form onSubmit={onSearchIssues}>
+    <input disabled={searchedIssuesQuery.isLoading} type="search" name="inputSearchIssues" className="inputSearchIssues" placeholder="React" required autoFocus />
+    <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
+  </form>
+}
+
 const App = () => {
   const [activeLabels, setActiveLabels] = useState([])
+
   const markAsActive = label => setActiveLabels(prev => {
     const isAlreadyActive = prev.some(prevLabel => prevLabel.id === label.id)
     return isAlreadyActive ? prev.filter(prevLabel => prevLabel.id !== label.id) : [...prev, label]
