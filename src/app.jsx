@@ -1,29 +1,32 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
 
-const getParametrizedIssues = data => data.map(issue => ({
-  id: issue.id,
-  state: issue.state,
-  title: issue.title,
-  createdAt: issue.created_at,
-  author: { username: issue.user.login, avatar: issue.user.avatar_url },
-  labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-  url: issue.html_url
-}))
+const getPerPageParam = ({ qty }) => `per_page=${qty}`
 
 const fetchIssues = activeLabels => {
   const labelsParam = activeLabels.length === 0
     ? ''
     : `?labels=${activeLabels.map(label => label.name).join(',')}`
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${labelsParam}`)
+  const perPageParam = getPerPageParam({ qty: 10 })
+  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${labelsParam}?${perPageParam}`)
     .then(res => res.json())
-    .then(getParametrizedIssues)
+    .then(data => data.map(issue => ({
+      id: issue.id,
+      state: issue.state,
+      title: issue.title,
+      createdAt: issue.created_at,
+      author: { username: issue.user.login, avatar: issue.user.avatar_url },
+      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+      url: issue.html_url,
+    })))
 }
 
-const fetchLabels = () =>
-  fetch('https://api.github.com/repos/frontendbr/vagas/labels?per_page=100')
+const fetchLabels = () => {
+  const perPageParam = getPerPageParam({ qty: 100 })
+  return fetch(`https://api.github.com/repos/frontendbr/vagas/labels?${perPageParam}`)
     .then(res => res.json())
     .then(data => data.map(label => ({ id: label.id, name: label.name, color: label.color })))
+}
 
 const getFormattedDate = date => {
   const [year, month, day] = date.split('T')[0].split('-')
@@ -88,15 +91,13 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   }
 
   const clearSearchedIssues = () => setSearchTerm('')
-
   const isError = issuesQuery.isError || searchedIssuesQuery.isError
   const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
   const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
-  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery : issuesQuery
-
+  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery.data?.issues : issuesQuery.data
   return (
     <div className="issuesListContainer">
-      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}": ${searchedIssuesQuery.data.length}`}</h1>
+      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}": ${searchedIssuesQuery.data.totalCount}`}</h1>
       <SearchIssues
         searchedIssuesQuery={searchedIssuesQuery}
         onSearchIssues={searchIssues}
@@ -106,7 +107,7 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
       {isError && <p>{errorMessage}</p>}
       {isLoading && <p>Carregando informações...</p>}
       <ul className="issuesList">
-        {queryToBeDisplayed.data?.map(issue =>
+        {queryToBeDisplayed?.map(issue =>
           <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
       </ul>
     </div>
@@ -144,10 +145,22 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
 }
 
 const fetchSearchedIssues = searchTerm => {
-  const queryString = '?q=' + encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)
+  const perPageParam = getPerPageParam({ qty: 10 })
+  const queryString = `?${perPageParam}&q=${encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)}`
   return fetch(`https://api.github.com/search/issues${queryString}`)
     .then(res => res.json())
-    .then(data => getParametrizedIssues(data.items))
+    .then(data => ({
+      totalCount: data.total_count,
+      issues: data.items.map(issue => ({
+        id: issue.id,
+        state: issue.state,
+        title: issue.title,
+        createdAt: issue.created_at,
+        author: { username: issue.user.login, avatar: issue.user.avatar_url },
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+        url: issue.html_url,
+      }))
+    }))
 }
 
 const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, clearSearchedIssues }) =>
