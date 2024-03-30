@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
 
-const getPerPageParam = ({ qty }) => `per_page=${qty}`
-
 const fetchIssues = activeLabels => {
   const labelsParam = activeLabels.length === 0
     ? ''
-    : `?labels=${activeLabels.map(label => label.name).join(',')}`
-  const perPageParam = getPerPageParam({ qty: 10 })
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${labelsParam}?${perPageParam}`)
+    : `&labels=${activeLabels.map(label => label.name).join(',')}`
+  const perPageParam = 'per_page=10'
+  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues?${perPageParam}${labelsParam}`)
     .then(res => res.json())
     .then(data => data.map(issue => ({
       id: issue.id,
@@ -22,7 +20,7 @@ const fetchIssues = activeLabels => {
 }
 
 const fetchLabels = () => {
-  const perPageParam = getPerPageParam({ qty: 100 })
+  const perPageParam = 'per_page=100'
   return fetch(`https://api.github.com/repos/frontendbr/vagas/labels?${perPageParam}`)
     .then(res => res.json())
     .then(data => data.map(label => ({ id: label.id, name: label.name, color: label.color })))
@@ -145,7 +143,7 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
 }
 
 const fetchSearchedIssues = searchTerm => {
-  const perPageParam = getPerPageParam({ qty: 10 })
+  const perPageParam = 'per_page=10'
   const queryString = `?${perPageParam}&q=${encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)}`
   return fetch(`https://api.github.com/search/issues${queryString}`)
     .then(res => res.json())
