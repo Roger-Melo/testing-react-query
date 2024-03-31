@@ -8,15 +8,19 @@ const fetchIssues = activeLabels => {
   const perPageParam = 'per_page=10'
   return fetch(`https://api.github.com/repos/frontendbr/vagas/issues?${perPageParam}${labelsParam}`)
     .then(res => res.json())
-    .then(data => data.map(issue => ({
-      id: issue.id,
-      state: issue.state,
-      title: issue.title,
-      createdAt: issue.created_at,
-      author: { username: issue.user.login, avatar: issue.user.avatar_url },
-      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-      url: issue.html_url,
-    })))
+    .then(data => {
+      return {
+        issues: data.map(issue => ({
+          id: issue.id,
+          state: issue.state,
+          title: issue.title,
+          createdAt: issue.created_at,
+          author: { username: issue.user.login, avatar: issue.user.avatar_url },
+          labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+          url: issue.html_url,
+        }))
+      }
+    })
 }
 
 const fetchLabels = () => {
@@ -79,7 +83,8 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
     queryFn: () => fetchIssues(activeLabels),
     refetchOnWindowFocus: false,
-    staleTime: Infinity
+    staleTime: Infinity,
+    retry: false
   })
 
   const searchIssues = e => {
@@ -92,7 +97,7 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   const isError = issuesQuery.isError || searchedIssuesQuery.isError
   const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
   const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
-  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery.data?.issues : issuesQuery.data
+  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery.data?.issues : issuesQuery.data?.issues
   return (
     <div className="issuesListContainer">
       <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}": ${searchedIssuesQuery.data.totalCount}`}</h1>
