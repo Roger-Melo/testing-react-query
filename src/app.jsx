@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useState, useRef, useEffect } from 'react'
 
-const fetchIssues = activeLabels => {
+const fetchIssues = async ({ activeLabels, currentPage }) => {
   const labelsParam = activeLabels.length === 0
-    ? ''
-    : `&labels=${activeLabels.map(label => label.name).join(',')}`
+    ? '' : `&labels=${activeLabels.map(label => label.name).join(',')}`
+  const baseUrl = 'https://api.github.com/repos/frontendbr/vagas/issues'
   const perPageParam = 'per_page=10'
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues?${perPageParam}${labelsParam}`)
+  const pageParam = `page=${currentPage}`
+  return fetch(`${baseUrl}?${perPageParam}${labelsParam}&${pageParam}`)
     .then(async res => {
       const issues = await res.json()
       return { issues, hasNextPage: res.headers.get('link').includes('rel="next"') }
@@ -67,6 +68,7 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
 
 const IssuesList = ({ activeLabels, onClickLabel }) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const formRef = useRef(null)
 
   useEffect(() => {
@@ -84,8 +86,9 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   })
 
   const issuesQuery = useQuery({
-    queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
-    queryFn: () => fetchIssues(activeLabels),
+    queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name), currentPage }, activeLabels],
+    queryFn: () => fetchIssues({ activeLabels, currentPage }),
+    placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
     retry: false
@@ -97,14 +100,18 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     setSearchTerm(inputSearchIssues.value)
   }
 
+  const showPreviousJobs = () => setCurrentPage(prev => prev === 1 ? prev : prev - 1)
+  const showNextJobs = () => setCurrentPage(prev => prev + 1)
   const clearSearchedIssues = () => setSearchTerm('')
   const isError = issuesQuery.isError || searchedIssuesQuery.isError
   const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
   const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
-  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery.data?.issues : issuesQuery.data?.issues
+  const queryToBeDisplayed = searchedIssuesQuery.isSuccess
+    ? searchedIssuesQuery.data?.issues : issuesQuery.data?.issues
+  const titleMessage = `com o termo "${searchTerm}": ${searchedIssuesQuery.data?.totalCount}`
   return (
     <div className="issuesListContainer">
-      <h1>Vagas {searchedIssuesQuery.isSuccess && `com o termo "${searchTerm}": ${searchedIssuesQuery.data.totalCount}`}</h1>
+      <h1>Vagas {searchedIssuesQuery.isSuccess && titleMessage}</h1>
       <SearchIssues
         searchedIssuesQuery={searchedIssuesQuery}
         onSearchIssues={searchIssues}
@@ -117,6 +124,9 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
         {queryToBeDisplayed?.map(issue =>
           <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
       </ul>
+      <button onClick={showPreviousJobs} disabled={currentPage === 1}>Anterior</button>
+      <p>Página {currentPage}</p>
+      <button onClick={showNextJobs} disabled={!issuesQuery.data?.hasNextPage}>Próximo</button>
     </div>
   )
 }
