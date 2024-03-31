@@ -7,10 +7,14 @@ const fetchIssues = activeLabels => {
     : `&labels=${activeLabels.map(label => label.name).join(',')}`
   const perPageParam = 'per_page=10'
   return fetch(`https://api.github.com/repos/frontendbr/vagas/issues?${perPageParam}${labelsParam}`)
-    .then(res => res.json())
+    .then(async res => {
+      const issues = await res.json()
+      return { issues, hasNextPage: res.headers.get('link').includes('rel="next"') }
+    })
     .then(data => {
       return {
-        issues: data.map(issue => ({
+        hasNextPage: data.hasNextPage,
+        issues: data.issues.map(issue => ({
           id: issue.id,
           state: issue.state,
           title: issue.title,
