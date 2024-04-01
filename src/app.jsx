@@ -18,6 +18,22 @@ const fetchIssues = activeLabels => {
     })))
 }
 
+const fetchSearchedIssues = searchTerm => {
+  const queryString = '?q=' +
+    encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)
+  return fetch(`https://api.github.com/search/issues${queryString}`)
+    .then(res => res.json())
+    .then(data => data.items.map(issue => ({
+      id: issue.id,
+      state: issue.state,
+      title: issue.title,
+      createdAt: issue.created_at,
+      author: { username: issue.user.login, avatar: issue.user.avatar_url },
+      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+      url: issue.html_url
+    })))
+}
+
 const fetchLabels = () =>
   fetch('https://api.github.com/repos/frontendbr/vagas/labels?per_page=100')
     .then(res => res.json())
@@ -78,10 +94,20 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     }
   }, [searchTerm])
 
+  const searchedIssuesQuery = useQuery({
+    queryKey: ['searchedIssues', { searchTerm }],
+    queryFn: () => fetchSearchedIssues(searchTerm),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    retry: false,
+    enabled: !!searchTerm
+  })
+
   const issuesQuery = useQuery({
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
     queryFn: () => fetchIssues(activeLabels),
     refetchOnWindowFocus: false,
+    retry: false,
     staleTime: Infinity
   })
 
@@ -91,18 +117,21 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     setSearchTerm(inputSearchIssues.value)
   }
 
+  const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
+  const isError = issuesQuery.isError || searchedIssuesQuery.isError
+  const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
+  const queryToBeDisplayed = searchedIssuesQuery.isSuccess ? searchedIssuesQuery : issuesQuery
+
   return (
     <div className="issuesListContainer">
       <h1>Vagas</h1>
       <SearchIssues onSearchIssues={searchIssues} formRef={formRef} />
-      {issuesQuery.isError && <p>{issuesQuery.error.message}</p>}
-      {issuesQuery.isLoading && <p>Carregando informações...</p>}
-      {issuesQuery.isSuccess && (
-        <ul className="issuesList">
-          {issuesQuery.data.map(issue =>
-            <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
-        </ul>
-      )}
+      {isError && <p>{errorMessage}</p>}
+      {isLoading && <p>Carregando informações...</p>}
+      <ul className="issuesList">
+        {queryToBeDisplayed.data?.map(issue =>
+          <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+      </ul>
     </div>
   )
 }
