@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const fetchIssues = activeLabels => {
   const labelsParam = activeLabels.length === 0
@@ -16,6 +16,25 @@ const fetchIssues = activeLabels => {
       labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
       url: issue.html_url
     })))
+}
+
+const fetchSearchedIssues = searchTerm => {
+  const queryString = '?q=' +
+    encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open`)
+  return fetch(`https://api.github.com/search/issues${queryString}`)
+    .then(res => res.json())
+    .then(data => ({
+      totalCount: data.total_count,
+      issues: data.items.map(issue => ({
+        id: issue.id,
+        state: issue.state,
+        title: issue.title,
+        createdAt: issue.created_at,
+        author: { username: issue.user.login, avatar: issue.user.avatar_url },
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+        url: issue.html_url
+      }))
+    }))
 }
 
 const fetchLabels = () =>
@@ -54,24 +73,82 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
     )}
   </li>
 
+const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSearchedIssues }) =>
+  <div className="searchIssues">
+    <form ref={formRef} onSubmit={onSearchIssues}>
+      <input
+        disabled={searchedIssuesQuery.isLoading}
+        type="search"
+        name="inputSearchIssues"
+        className="inputSearchIssues"
+        placeholder="React"
+        minLength={2}
+        required
+        autoFocus
+      />
+      <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
+    </form>
+    {searchedIssuesQuery.data && <button onClick={onClearSearchedIssues}>Limpar Pesquisa</button>}
+  </div>
+
 const IssuesList = ({ activeLabels, onClickLabel }) => {
-  const { isError, isLoading, isSuccess, error, data } = useQuery({
+  const [searchTerm, setSearchTerm] = useState('')
+  const formRef = useRef(null)
+
+  useEffect(() => {
+    if (searchTerm.length > 0) {
+      formRef.current.reset()
+    }
+  }, [searchTerm])
+
+  const searchedIssuesQuery = useQuery({
+    queryKey: ['searchedIssues', { searchTerm }],
+    queryFn: () => fetchSearchedIssues(searchTerm),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    retry: false,
+    enabled: !!searchTerm
+  })
+
+  const issuesQuery = useQuery({
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
     queryFn: () => fetchIssues(activeLabels),
     refetchOnWindowFocus: false,
+    retry: false,
     staleTime: Infinity
   })
 
+  const searchIssues = e => {
+    e.preventDefault()
+    const { inputSearchIssues } = e.target.elements
+    setSearchTerm(inputSearchIssues.value)
+  }
+
+  const clearSearchedIssues = () => setSearchTerm('')
+
+  const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
+  const isError = issuesQuery.isError || searchedIssuesQuery.isError
+  const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
+  const titleMessage = `com o termo "${searchTerm}": ${searchedIssuesQuery.data?.totalCount}`
+  const dataToRender = searchedIssuesQuery.isSuccess
+    ? searchedIssuesQuery.data.issues
+    : issuesQuery.data
+
   return (
     <div className="issuesListContainer">
-      <h1>Vagas</h1>
-      {isError && <p>{error.message}</p>}
+      <h1>Vagas {searchedIssuesQuery.isSuccess && titleMessage}</h1>
+      <SearchIssues
+        onSearchIssues={searchIssues}
+        formRef={formRef}
+        searchedIssuesQuery={searchedIssuesQuery}
+        onClearSearchedIssues={clearSearchedIssues}
+      />
+      {isError && <p>{errorMessage}</p>}
       {isLoading && <p>Carregando informações...</p>}
-      {isSuccess && (
-        <ul className="issuesList">
-          {data.map(issue => <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
-        </ul>
-      )}
+      <ul className="issuesList">
+        {dataToRender?.map(issue =>
+          <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+      </ul>
     </div>
   )
 }
@@ -91,10 +168,15 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
         <ul className="labelsList">
-          {data.map(label => {
-            const isActive = activeLabels.some(activeLabel => label.id === activeLabel.id)
-            return <Label key={label.id} isActive={isActive} label={label} activeLabels={activeLabels} onClickLabel={onClickLabel} />
-          })}
+          {data.map(label =>
+            <Label
+              key={label.id}
+              isActive={activeLabels.some(activeLabel => label.id === activeLabel.id)}
+              label={label}
+              activeLabels={activeLabels}
+              onClickLabel={onClickLabel}
+            />
+          )}
         </ul>
       )}
     </div>
