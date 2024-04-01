@@ -74,6 +74,7 @@ const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSea
   <div className="searchIssues">
     <form ref={formRef} onSubmit={onSearchIssues}>
       <input
+        disabled={searchedIssuesQuery.isLoading}
         type="search"
         name="inputSearchIssues"
         className="inputSearchIssues"
@@ -82,7 +83,7 @@ const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSea
         required
         autoFocus
       />
-      <button>Pesquisar</button>
+      <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
     </form>
     {searchedIssuesQuery.data && <button onClick={onClearSearchedIssues}>Limpar Pesquisa</button>}
   </div>
