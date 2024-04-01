@@ -66,12 +66,3 @@ ul {
 .activeLabel {
   filter: opacity(.3);
 }
-
-.inputSearchIssues {
-  border: .1rem solid lightgrey;
-}
-
-.searchIssues {
-  display: flex;
-  gap: 1rem;
-}
