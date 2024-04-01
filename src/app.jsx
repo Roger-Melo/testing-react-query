@@ -54,6 +54,20 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
     )}
   </li>
 
+const SearchIssues = () =>
+  <form>
+    <input
+      type="search"
+      name="inputSearchIssues"
+      className="inputSearchIssues"
+      placeholder="React"
+      minLength={2}
+      required
+      autoFocus
+    />
+    <button>Pesquisar</button>
+  </form>
+
 const IssuesList = ({ activeLabels, onClickLabel }) => {
   const { isError, isLoading, isSuccess, error, data } = useQuery({
     queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
@@ -65,6 +79,7 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   return (
     <div className="issuesListContainer">
       <h1>Vagas</h1>
+      <SearchIssues />
       {isError && <p>{error.message}</p>}
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
