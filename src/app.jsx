@@ -106,10 +106,15 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
       {isLoading && <p>Carregando informações...</p>}
       {isSuccess && (
         <ul className="labelsList">
-          {data.map(label => {
-            const isActive = activeLabels.some(activeLabel => label.id === activeLabel.id)
-            return <Label key={label.id} isActive={isActive} label={label} activeLabels={activeLabels} onClickLabel={onClickLabel} />
-          })}
+          {data.map(label =>
+            <Label
+              key={label.id}
+              isActive={activeLabels.some(activeLabel => label.id === activeLabel.id)}
+              label={label}
+              activeLabels={activeLabels}
+              onClickLabel={onClickLabel}
+            />
+          )}
         </ul>
       )}
     </div>
