@@ -3,6 +3,10 @@ ul {
   padding-inline-start: 0;
 }
 
+button:hover {
+  cursor: pointer;
+}
+
 .app {
   display: flex;
   gap: 1rem;
@@ -46,10 +50,6 @@ ul {
   border-width: 0;
 }
 
-.label:hover {
-  cursor: pointer;
-}
-
 .labelsListContainer {
   width: 28rem;
 }
@@ -69,4 +69,9 @@ ul {
 
 .inputSearchIssues {
   border: .1rem solid lightgrey;
+}
+
+.searchIssues {
+  display: flex;
+  gap: 1rem;
 }
