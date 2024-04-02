@@ -19,7 +19,9 @@ const fetchIssues = activeLabels => {
 }
 
 const fetchSearchedIssues = ({ searchTerm, activeLabels }) => {
-  const labels = activeLabels.length > 0 ? `label:${activeLabels[0].name}` : ''
+  const labels = activeLabels.length > 0
+    ? activeLabels.map(label => `label:${label.name}`).join(' ')
+    : ''
   const queryString = '?q=' +
     encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open ${labels}`)
   return fetch(`https://api.github.com/search/issues${queryString}`)
