@@ -152,6 +152,19 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
         {dataToRender?.map(issue =>
           <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
       </ul>
+      <nav className="paginationNav">
+        <ul className="pagination">
+          <li>
+            <button>Anterior</button>
+          </li>
+          <li>
+            <span>X</span>
+          </li>
+          <li>
+            <button>Próxima</button>
+          </li>
+        </ul>
+      </nav>
     </div>
   )
 }
