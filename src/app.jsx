@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 
 const fetchIssues = ({ activeLabels, currentPage }) => {
@@ -111,6 +111,10 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   const formRef = useRef(null)
 
   useEffect(() => {
+    scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [currentPage])
+
+  useEffect(() => {
     if (searchTerm.length > 0) {
       formRef.current.reset()
     }
@@ -134,8 +138,7 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
     queryFn: () => fetchIssues({ activeLabels, currentPage }),
     refetchOnWindowFocus: false,
     retry: false,
-    staleTime: Infinity,
-    placeholderData: keepPreviousData
+    staleTime: Infinity
   })
 
   const searchIssues = e => {
