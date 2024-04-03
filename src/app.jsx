@@ -1,21 +1,32 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 
-const fetchIssues = activeLabels => {
+const fetchIssues = ({ activeLabels, currentPage }) => {
   const labelsParam = activeLabels.length === 0
     ? ''
-    : `?labels=${activeLabels.map(label => label.name).join(',')}`
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${labelsParam}`)
-    .then(res => res.json())
-    .then(data => data.map(issue => ({
-      id: issue.id,
-      state: issue.state,
-      title: issue.title,
-      createdAt: issue.created_at,
-      author: { username: issue.user.login, avatar: issue.user.avatar_url },
-      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-      url: issue.html_url
-    })))
+    : `&labels=${activeLabels.map(label => label.name).join(',')}`
+  const pageParam = `?page=${currentPage}`
+  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${pageParam}${labelsParam}`)
+    .then(async res => ({
+      issues: await res.json(),
+      pages: res.headers?.get('link')?.split(',').reduce((acc, str) => {
+        const key = `${str.match(/rel="([^"]+)"/)[1]}Page`
+        const value = +str.match(/page=(\d+)/)[1]
+        return { ...acc, [key]: value }
+      }, {})
+    }))
+    .then(data => ({
+      ...data,
+      issues: data.issues.map(issue => ({
+        id: issue.id,
+        state: issue.state,
+        title: issue.title,
+        createdAt: issue.created_at,
+        author: { username: issue.user.login, avatar: issue.user.avatar_url },
+        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+        url: issue.html_url
+      }))
+    }))
 }
 
 const fetchSearchedIssues = ({ searchTerm, activeLabels }) => {
@@ -96,6 +107,7 @@ const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSea
 
 const IssuesList = ({ activeLabels, onClickLabel }) => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
   const formRef = useRef(null)
 
   useEffect(() => {
@@ -114,8 +126,12 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   })
 
   const issuesQuery = useQuery({
-    queryKey: ['issues', { activeLabels: activeLabels.map(({ name }) => name) }, activeLabels],
-    queryFn: () => fetchIssues(activeLabels),
+    queryKey: [
+      'issues',
+      { activeLabels: activeLabels.map(({ name }) => name), currentPage },
+      activeLabels
+    ],
+    queryFn: () => fetchIssues({ activeLabels, currentPage }),
     refetchOnWindowFocus: false,
     retry: false,
     staleTime: Infinity
@@ -128,6 +144,8 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   }
 
   const clearSearchedIssues = () => setSearchTerm('')
+  const goToPreviousPage = () => setCurrentPage(prev => prev - 1)
+  const goToNextPage = () => setCurrentPage(prev => prev + 1)
 
   const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
   const isError = issuesQuery.isError || searchedIssuesQuery.isError
@@ -135,7 +153,7 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   const titleMessage = `com o termo "${searchTerm}": ${searchedIssuesQuery.data?.totalCount}`
   const dataToRender = searchedIssuesQuery.isSuccess
     ? searchedIssuesQuery.data.issues
-    : issuesQuery.data
+    : issuesQuery.data?.issues
 
   return (
     <div className="issuesListContainer">
@@ -155,13 +173,13 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
       <nav className="paginationNav">
         <ul className="pagination">
           <li>
-            <button>Anterior</button>
+            <button onClick={goToPreviousPage}>Anterior</button>
           </li>
           <li>
-            <span>X</span>
+            <span>{currentPage}</span>
           </li>
           <li>
-            <button>Próxima</button>
+            <button onClick={goToNextPage}>Próxima</button>
           </li>
         </ul>
       </nav>
