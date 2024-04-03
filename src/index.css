@@ -7,6 +7,10 @@ button:hover {
   cursor: pointer;
 }
 
+button:disabled:hover {
+  cursor: not-allowed;
+}
+
 .app {
   display: flex;
   gap: 1rem;

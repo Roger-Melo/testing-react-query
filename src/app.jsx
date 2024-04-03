@@ -173,13 +173,20 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
       <nav className="paginationNav">
         <ul className="pagination">
           <li>
-            <button onClick={goToPreviousPage}>Anterior</button>
+            <button disabled={currentPage === 1} onClick={goToPreviousPage}>
+              Anterior
+            </button>
           </li>
           <li>
             <span>{currentPage}</span>
           </li>
           <li>
-            <button onClick={goToNextPage}>Próxima</button>
+            <button
+              disabled={issuesQuery.data && !issuesQuery.data.pages.nextPage}
+              onClick={goToNextPage}
+            >
+              Próxima
+            </button>
           </li>
         </ul>
       </nav>
