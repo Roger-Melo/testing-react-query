@@ -126,14 +126,9 @@ const Pagination = ({ issuesQuery, currentPage, onClickPreviousPage, onClickNext
     </ul>
   </nav>
 
-const IssuesList = ({ activeLabels, onClickLabel }) => {
+const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPage, onClickNextPage }) => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
   const formRef = useRef(null)
-
-  useEffect(() => {
-    scrollTo({ top: 0, left: 0, behavior: 'smooth' })
-  }, [currentPage])
 
   useEffect(() => {
     if (searchTerm.length > 0) {
@@ -169,8 +164,6 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
   }
 
   const clearSearchedIssues = () => setSearchTerm('')
-  const goToPreviousPage = () => setCurrentPage(prev => prev - 1)
-  const goToNextPage = () => setCurrentPage(prev => prev + 1)
 
   const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
   const isError = issuesQuery.isError || searchedIssuesQuery.isError
@@ -198,8 +191,8 @@ const IssuesList = ({ activeLabels, onClickLabel }) => {
       <Pagination
         issuesQuery={issuesQuery}
         currentPage={currentPage}
-        onClickPreviousPage={goToPreviousPage}
-        onClickNextPage={goToNextPage}
+        onClickPreviousPage={onClickPreviousPage}
+        onClickNextPage={onClickNextPage}
       />
     </div>
   )
@@ -237,15 +230,34 @@ const LabelsList = ({ activeLabels, onClickLabel }) => {
 
 const App = () => {
   const [activeLabels, setActiveLabels] = useState([])
-  const markAsActive = label => setActiveLabels(prev => {
-    const isAlreadyActive = prev.some(prevLabel => prevLabel.id === label.id)
-    return isAlreadyActive ? prev.filter(prevLabel => prevLabel.id !== label.id) : [...prev, label]
-  })
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }, [currentPage])
+
+  const handleClickLabel = clickedLabel => {
+    setCurrentPage(1)
+    setActiveLabels(prev => {
+      const isAlreadyActive = prev.some(prevLabel => prevLabel.id === clickedLabel.id)
+      return isAlreadyActive
+        ? prev.filter(prevLabel => prevLabel.id !== clickedLabel.id) : [...prev, clickedLabel]
+    })
+  }
+
+  const goToPreviousPage = () => setCurrentPage(prev => prev - 1)
+  const goToNextPage = () => setCurrentPage(prev => prev + 1)
 
   return (
     <div className="app">
-      <IssuesList activeLabels={activeLabels} onClickLabel={markAsActive} />
-      <LabelsList activeLabels={activeLabels} onClickLabel={markAsActive} />
+      <IssuesList
+        activeLabels={activeLabels}
+        currentPage={currentPage}
+        onClickLabel={handleClickLabel}
+        onClickPreviousPage={goToPreviousPage}
+        onClickNextPage={goToNextPage}
+      />
+      <LabelsList activeLabels={activeLabels} onClickLabel={handleClickLabel} />
     </div>
   )
 }
