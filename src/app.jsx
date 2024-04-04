@@ -6,7 +6,8 @@ const fetchIssues = ({ activeLabels, currentPage }) => {
     ? ''
     : `&labels=${activeLabels.map(label => label.name).join(',')}`
   const pageParam = `?page=${currentPage}`
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${pageParam}${labelsParam}`)
+  const perPageParam = `&per_page=10`
+  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${pageParam}${perPageParam}${labelsParam}`)
     .then(async res => ({
       issues: await res.json(),
       pages: res.headers?.get('link')?.split(',').reduce((acc, str) => {
