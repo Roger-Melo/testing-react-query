@@ -1,41 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 
-const fetchIssues = ({ activeLabels, currentPage }) => {
-  const labelsParam = activeLabels.length === 0
-    ? ''
-    : `&labels=${activeLabels.map(label => label.name).join(',')}`
-  const pageParam = `?page=${currentPage}`
-  const perPageParam = `&per_page=10`
-  return fetch(`https://api.github.com/repos/frontendbr/vagas/issues${pageParam}${perPageParam}${labelsParam}`)
-    .then(async res => ({
-      issues: await res.json(),
-      pages: res.headers?.get('link')?.split(',').reduce((acc, str) => {
-        const key = `${str.match(/rel="([^"]+)"/)[1]}Page`
-        const value = +str.match(/\bpage=(\d+)/)[1]
-        return { ...acc, [key]: value }
-      }, {})
-    }))
-    .then(data => ({
-      ...data,
-      issues: data.issues.map(issue => ({
-        id: issue.id,
-        state: issue.state,
-        title: issue.title,
-        createdAt: issue.created_at,
-        author: { username: issue.user.login, avatar: issue.user.avatar_url },
-        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-        url: issue.html_url
-      }))
-    }))
-}
-
-const fetchSearchedIssues = ({ currentPage, searchTerm, activeLabels }) => {
+const fetchSearchedIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
   const labels = activeLabels.length > 0
     ? activeLabels.map(label => `label:${label.name}`).join(' ')
     : ''
   const queryString = `?per_page=10&page=${currentPage}&q=` +
-    encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open ${labels}`)
+    encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open sort:created-desc ${labels}`)
   return fetch(`https://api.github.com/search/issues${queryString}`)
     .then(async res => {
       const data = await res.json()
@@ -99,7 +70,7 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
     )}
   </li>
 
-const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSearchedIssues }) =>
+const SearchIssues = ({ isASearch, formRef, searchedIssuesQuery, onSearchIssues, onClearSearchedIssues }) =>
   <div className="searchIssues">
     <form ref={formRef} onSubmit={onSearchIssues}>
       <input
@@ -114,7 +85,7 @@ const SearchIssues = ({ formRef, searchedIssuesQuery, onSearchIssues, onClearSea
       />
       <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
     </form>
-    {searchedIssuesQuery.data && <button onClick={onClearSearchedIssues}>Limpar Pesquisa</button>}
+    {isASearch && <button onClick={onClearSearchedIssues}>Limpar Pesquisa</button>}
   </div>
 
 const Pagination = ({ queryToPaginate, currentPage, onClickPreviousPage, onClickNextPage }) =>
@@ -128,7 +99,7 @@ const Pagination = ({ queryToPaginate, currentPage, onClickPreviousPage, onClick
       </li>
       <li>
         <button
-          disabled={queryToPaginate.data && !queryToPaginate.data.pages.nextPage}
+          disabled={queryToPaginate.data && !queryToPaginate.data.pages?.nextPage}
           onClick={onClickNextPage}
         >
           Próxima
@@ -152,20 +123,7 @@ const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPa
     queryFn: () => fetchSearchedIssues({ currentPage, searchTerm, activeLabels }),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
-    retry: false,
-    enabled: !!searchTerm
-  })
-
-  const issuesQuery = useQuery({
-    queryKey: [
-      'issues',
-      { activeLabels: activeLabels.map(({ name }) => name), currentPage },
-      activeLabels
-    ],
-    queryFn: () => fetchIssues({ activeLabels, currentPage }),
-    refetchOnWindowFocus: false,
-    retry: false,
-    staleTime: Infinity
+    retry: false
   })
 
   const searchIssues = e => {
@@ -175,38 +133,36 @@ const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPa
     onResetCurrentPage()
   }
 
+  const isASearch = searchTerm.length > 0
   const clearSearchedIssues = () => setSearchTerm('')
-
-  const isLoading = issuesQuery.isLoading || searchedIssuesQuery.isLoading
-  const isError = issuesQuery.isError || searchedIssuesQuery.isError
-  const errorMessage = issuesQuery.error?.message || searchedIssuesQuery.error?.message
   const titleMessage = `com o termo "${searchTerm}": ${searchedIssuesQuery.data?.totalCount}`
-  const queryToPaginate = searchedIssuesQuery.isSuccess ? searchedIssuesQuery : issuesQuery
-  const dataToRender = searchedIssuesQuery.isSuccess
-    ? searchedIssuesQuery.data.issues
-    : issuesQuery.data?.issues
 
   return (
     <div className="issuesListContainer">
-      <h1>Vagas {searchedIssuesQuery.isSuccess && titleMessage}</h1>
+      <h1>Vagas {isASearch && !searchedIssuesQuery.isLoading && titleMessage}</h1>
       <SearchIssues
+        isASearch={isASearch}
         onSearchIssues={searchIssues}
         formRef={formRef}
         searchedIssuesQuery={searchedIssuesQuery}
         onClearSearchedIssues={clearSearchedIssues}
       />
-      {isError && <p>{errorMessage}</p>}
-      {isLoading && <p>Carregando informações...</p>}
-      <ul className="issuesList">
-        {dataToRender?.map(issue =>
-          <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
-      </ul>
-      <Pagination
-        queryToPaginate={queryToPaginate}
-        currentPage={currentPage}
-        onClickPreviousPage={onClickPreviousPage}
-        onClickNextPage={onClickNextPage}
-      />
+      {searchedIssuesQuery.isError && <p>{searchedIssuesQuery.error.message}</p>}
+      {searchedIssuesQuery.isLoading && <p>Carregando informações...</p>}
+      {searchedIssuesQuery.isSuccess && (
+        <>
+          <ul className="issuesList">
+            {searchedIssuesQuery.data.issues.map(issue =>
+              <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
+          </ul>
+          <Pagination
+            queryToPaginate={searchedIssuesQuery}
+            currentPage={currentPage}
+            onClickPreviousPage={onClickPreviousPage}
+            onClickNextPage={onClickNextPage}
+          />
+        </>
+      )}
     </div>
   )
 }
