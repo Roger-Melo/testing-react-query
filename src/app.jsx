@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, useEffect, useRef } from 'react'
 
-const fetchSearchedIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
+const fetchIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
   const labels = activeLabels.length > 0
     ? activeLabels.map(label => `label:${label.name}`).join(' ')
     : ''
@@ -70,11 +70,11 @@ const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel 
     )}
   </li>
 
-const SearchIssues = ({ isASearch, formRef, searchedIssuesQuery, onSearchIssues, onClearSearchedIssues }) =>
+const SearchIssues = ({ isASearch, formRef, issuesQuery, onSearchIssues, onClearSearchedIssues }) =>
   <div className="searchIssues">
     <form ref={formRef} onSubmit={onSearchIssues}>
       <input
-        disabled={searchedIssuesQuery.isLoading}
+        disabled={issuesQuery.isLoading}
         type="search"
         name="inputSearchIssues"
         className="inputSearchIssues"
@@ -83,7 +83,7 @@ const SearchIssues = ({ isASearch, formRef, searchedIssuesQuery, onSearchIssues,
         required
         autoFocus
       />
-      <button disabled={searchedIssuesQuery.isLoading}>Pesquisar</button>
+      <button disabled={issuesQuery.isLoading}>Pesquisar</button>
     </form>
     {isASearch && <button onClick={onClearSearchedIssues}>Limpar Pesquisa</button>}
   </div>
@@ -118,9 +118,9 @@ const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPa
     }
   }, [searchTerm])
 
-  const searchedIssuesQuery = useQuery({
-    queryKey: ['searchedIssues', { searchTerm, activeLabels, currentPage }],
-    queryFn: () => fetchSearchedIssues({ currentPage, searchTerm, activeLabels }),
+  const issuesQuery = useQuery({
+    queryKey: ['issues', { searchTerm, activeLabels, currentPage }],
+    queryFn: () => fetchIssues({ currentPage, searchTerm, activeLabels }),
     refetchOnWindowFocus: false,
     staleTime: Infinity,
     retry: false
@@ -135,28 +135,28 @@ const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPa
 
   const isASearch = searchTerm.length > 0
   const clearSearchedIssues = () => setSearchTerm('')
-  const titleMessage = `com o termo "${searchTerm}": ${searchedIssuesQuery.data?.totalCount}`
+  const titleMessage = `com o termo "${searchTerm}": ${issuesQuery.data?.totalCount}`
 
   return (
     <div className="issuesListContainer">
-      <h1>Vagas {isASearch && !searchedIssuesQuery.isLoading && titleMessage}</h1>
+      <h1>Vagas {isASearch && !issuesQuery.isLoading && titleMessage}</h1>
       <SearchIssues
         isASearch={isASearch}
         onSearchIssues={searchIssues}
         formRef={formRef}
-        searchedIssuesQuery={searchedIssuesQuery}
+        issuesQuery={issuesQuery}
         onClearSearchedIssues={clearSearchedIssues}
       />
-      {searchedIssuesQuery.isError && <p>{searchedIssuesQuery.error.message}</p>}
-      {searchedIssuesQuery.isLoading && <p>Carregando informações...</p>}
-      {searchedIssuesQuery.isSuccess && (
+      {issuesQuery.isError && <p>{issuesQuery.error.message}</p>}
+      {issuesQuery.isLoading && <p>Carregando informações...</p>}
+      {issuesQuery.isSuccess && (
         <>
           <ul className="issuesList">
-            {searchedIssuesQuery.data.issues.map(issue =>
+            {issuesQuery.data.issues.map(issue =>
               <IssueItem key={issue.id} onClickLabel={onClickLabel} {...issue} />)}
           </ul>
           <Pagination
-            queryToPaginate={searchedIssuesQuery}
+            queryToPaginate={issuesQuery}
             currentPage={currentPage}
             onClickPreviousPage={onClickPreviousPage}
             onClickNextPage={onClickNextPage}
