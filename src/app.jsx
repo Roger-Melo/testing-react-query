@@ -30,7 +30,8 @@ const fetchIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
         createdAt: issue.created_at,
         author: { username: issue.user.login, avatar: issue.user.avatar_url },
         labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-        url: issue.html_url
+        url: issue.html_url,
+        number: issue.number
       }))
     }))
 }
@@ -54,11 +55,11 @@ const Label = ({ isActive = false, label, onClickLabel }) =>
     {label.name}
   </button>
 
-const IssueItem = ({ state, title, createdAt, labels, author, id, onClickLabel }) =>
+const IssueItem = ({ state, title, createdAt, labels, author, number, onClickLabel }) =>
   <li>
     <span>{state}</span>
     <h3>
-      <Link to={`issues/${id}`}>{title}</Link>
+      <Link to={`issues/${number}`}>{title}</Link>
     </h3>
     <div className="createdBy">
       <p>Criada em {getFormattedDate(createdAt)}, por {author.username}</p>
