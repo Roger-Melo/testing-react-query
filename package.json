@@ -13,6 +13,8 @@
     "@tanstack/eslint-plugin-query": "5.27.7",
     "@tanstack/react-query": "5.28.4",
     "@tanstack/react-query-devtools": "5.28.4",
+    "dompurify": "3.0.11",
+    "marked": "12.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-router-dom": "6.22.3"

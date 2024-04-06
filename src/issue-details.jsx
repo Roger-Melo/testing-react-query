@@ -1,14 +1,14 @@
 import { Link, useLoaderData } from 'react-router-dom'
+import { parse } from 'marked'
+import DOMPurify from 'dompurify'
 
 const IssueDetails = () => {
   const data = useLoaderData()
-  console.log('data:', data)
-
   return (
     <>
       <Link to="/">Voltar</Link>
       <h2>{data.title}</h2>
-      <p>{data.body}</p>
+      <main dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(parse(data.body)) }} />
     </>
   )
 }
