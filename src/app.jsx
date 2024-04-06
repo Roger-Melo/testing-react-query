@@ -1,4 +1,5 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 
 const fetchIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
@@ -53,11 +54,11 @@ const Label = ({ isActive = false, label, onClickLabel }) =>
     {label.name}
   </button>
 
-const IssueItem = ({ state, title, createdAt, labels, author, url, onClickLabel }) =>
+const IssueItem = ({ state, title, createdAt, labels, author, id, onClickLabel }) =>
   <li>
     <span>{state}</span>
     <h3>
-      <a href={url} target="_blank" rel="noreferrer">{title}</a>
+      <Link to={`issues/${id}`}>{title}</Link>
     </h3>
     <div className="createdBy">
       <p>Criada em {getFormattedDate(createdAt)}, por {author.username}</p>
