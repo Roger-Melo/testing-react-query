@@ -13,9 +13,11 @@
     "@tanstack/eslint-plugin-query": "5.27.7",
     "@tanstack/react-query": "5.28.4",
     "@tanstack/react-query-devtools": "5.28.4",
+    "dompurify": "3.0.11",
+    "marked": "12.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-router-dom": "6.21.3"
+    "react-router-dom": "6.22.3"
   },
   "devDependencies": {
     "@types/react": "18.2.48",
@@ -25,6 +27,6 @@
     "eslint-plugin-react": "7.33.2",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.5",
-    "vite": "5.2.2"
+    "vite": "5.2.8"
   }
 }
