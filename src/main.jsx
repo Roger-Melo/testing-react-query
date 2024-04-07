@@ -16,7 +16,7 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/">
       <Route index element={<App />} />
-      <Route path="issues/:issueNumber" element={<IssueDetails />} loader={issueDetailsLoader} />
+      <Route path="issues/:issueNumber" element={<IssueDetails />} loader={issueDetailsLoader(queryClient)} />
     </Route>
   )
 )
