@@ -2,10 +2,10 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 
-const fetchIssues = ({ currentPage, searchTerm = '', activeLabels }) => {
+const fetchIssues = ({ queryKey }) => {
+  const [, { currentPage, searchTerm = '', activeLabels }] = queryKey
   const labels = activeLabels.length > 0
-    ? activeLabels.map(label => `label:${label.name}`).join(' ')
-    : ''
+    ? activeLabels.map(label => `label:${label.name}`).join(' ') : ''
   const queryString = `?per_page=10&page=${currentPage}&q=` +
     encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open sort:created-desc ${labels}`)
   return fetch(`https://api.github.com/search/issues${queryString}`)
@@ -122,7 +122,7 @@ const IssuesList = ({ currentPage, activeLabels, onClickLabel, onClickPreviousPa
 
   const issuesQuery = useQuery({
     queryKey: ['issues', { searchTerm, activeLabels, currentPage }],
-    queryFn: () => fetchIssues({ currentPage, searchTerm, activeLabels }),
+    queryFn: fetchIssues,
     placeholderData: keepPreviousData
   })
 
