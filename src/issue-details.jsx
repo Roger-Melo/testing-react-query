@@ -6,13 +6,7 @@ import { getIssueDetailsQuery } from '@/issue-details-loader'
 
 const IssueDetails = () => {
   const params = useParams()
-  const issueDetailsQuery = useQuery({
-    ...getIssueDetailsQuery(params.issueNumber),
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-    retry: false
-  })
-
+  const issueDetailsQuery = useQuery({ ...getIssueDetailsQuery(params.issueNumber) })
   return (
     <>
       <Link to="/">Voltar</Link>
