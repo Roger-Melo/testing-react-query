@@ -2,39 +2,41 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useState, useEffect, useRef } from 'react'
 
-const fetchIssues = ({ queryKey }) => {
+const getIssuesUrl = queryKey => {
   const [, { currentPage, searchTerm = '', activeLabels }] = queryKey
   const labels = activeLabels.length > 0
     ? activeLabels.map(label => `label:"${label.name}"`).join(' ') : ''
   const queryString = `?per_page=10&page=${currentPage}&q=` +
     encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open sort:created-desc ${labels}`)
-  return fetch(`https://api.github.com/search/issues${queryString}`)
-    .then(async res => {
-      const data = await res.json()
-      return ({
-        issues: data.items,
-        totalCount: data.total_count,
-        pages: res.headers?.get('link')?.split(',').reduce((acc, str) => {
-          const key = `${str.match(/rel="([^"]+)"/)[1]}Page`
-          const value = +str.match(/\bpage=(\d+)/)[1]
-          return { ...acc, [key]: value }
-        }, {})
-      })
-    })
-    .then(data => ({
-      ...data,
-      issues: data.issues.map(issue => ({
-        id: issue.id,
-        state: issue.state,
-        title: issue.title,
-        createdAt: issue.created_at,
-        author: { username: issue.user.login, avatar: issue.user.avatar_url },
-        labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
-        url: issue.html_url,
-        number: issue.number
-      }))
-    }))
+  return `https://api.github.com/search/issues${queryString}`
 }
+
+const fetchIssues = ({ queryKey }) => fetch(getIssuesUrl(queryKey))
+  .then(async res => {
+    const data = await res.json()
+    return ({
+      issues: data.items,
+      totalCount: data.total_count,
+      pages: res.headers?.get('link')?.split(',').reduce((acc, str) => {
+        const key = `${str.match(/rel="([^"]+)"/)[1]}Page`
+        const value = +str.match(/\bpage=(\d+)/)[1]
+        return { ...acc, [key]: value }
+      }, {})
+    })
+  })
+  .then(data => ({
+    ...data,
+    issues: data.issues.map(issue => ({
+      id: issue.id,
+      state: issue.state,
+      title: issue.title,
+      createdAt: issue.created_at,
+      author: { username: issue.user.login, avatar: issue.user.avatar_url },
+      labels: issue.labels.map(label => ({ id: label.id, color: label.color, name: label.name })),
+      url: issue.html_url,
+      number: issue.number
+    }))
+  }))
 
 const fetchLabels = () =>
   fetch('https://api.github.com/repos/frontendbr/vagas/labels?per_page=100')
