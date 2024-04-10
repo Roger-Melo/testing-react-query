@@ -6,9 +6,15 @@ const getIssuesUrl = queryKey => {
   const [, { currentPage, searchTerm = '', activeLabels }] = queryKey
   const labels = activeLabels.length > 0
     ? activeLabels.map(label => `label:"${label.name}"`).join(' ') : ''
-  const queryString = `?per_page=10&page=${currentPage}&q=` +
-    encodeURIComponent(`${searchTerm} repo:frontendbr/vagas is:issue is:open sort:created-desc ${labels}`)
-  return `https://api.github.com/search/issues${queryString}`
+  const url = new URL('https://api.github.com/search/issues')
+  const params = {
+    per_page: 10,
+    page: currentPage,
+    q: `${searchTerm} repo:frontendbr/vagas is:issue is:open sort:created-desc ${labels}`.trim()
+  }
+
+  Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value))
+  return url.href
 }
 
 const fetchIssues = ({ queryKey }) => fetch(getIssuesUrl(queryKey))
